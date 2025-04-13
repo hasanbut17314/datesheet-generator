@@ -1,20 +1,28 @@
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DateSheetList } from "@/app/admin/datesheets/datesheet-list"
 import { CreateDateSheetForm } from "@/app/admin/datesheets/create-datesheet-form"
+import { redirect } from "next/navigation"
+import { User } from "@/lib/types"
 
-// Mock data - in a real app, this would come from your database
-const mockUser = {
-  id: "1",
-  name: "Admin User",
-  email: "admin@example.com",
-  role: "admin" as const,
-}
+export default async function AdminDateSheetsPage() {
+  const session = await getServerSession(authOptions)
 
-export default function AdminDateSheetsPage() {
+  if (!session) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "admin") {
+    redirect("/dashboard")
+  }
+
+  const user = session.user as User
+
   return (
-    <DashboardShell user={mockUser}>
+    <DashboardShell user={user}>
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Manage Datesheets</h1>
         <p className="text-muted-foreground">Create, edit, and publish examination schedules.</p>

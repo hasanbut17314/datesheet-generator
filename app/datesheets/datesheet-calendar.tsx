@@ -1,66 +1,77 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
-// Sample data
-const exams = [
-  {
-    id: "1",
-    course: "Introduction to Computer Science",
-    code: "CS101",
-    date: new Date("2023-12-15"),
-    startTime: "09:00",
-    endTime: "11:00",
-    venue: "Hall A",
-    type: "final",
-  },
-  {
-    id: "2",
-    course: "Calculus II",
-    code: "MATH201",
-    date: new Date("2023-12-18"),
-    startTime: "13:00",
-    endTime: "15:00",
-    venue: "Hall B",
-    type: "final",
-  },
-  {
-    id: "3",
-    course: "Physics I",
-    code: "PHY101",
-    date: new Date("2023-12-20"),
-    startTime: "10:00",
-    endTime: "12:00",
-    venue: "Hall C",
-    type: "final",
-  },
-  {
-    id: "4",
-    course: "Data Structures",
-    code: "CS201",
-    date: new Date("2023-12-22"),
-    startTime: "14:00",
-    endTime: "16:00",
-    venue: "Hall A",
-    type: "final",
-  },
-  {
-    id: "5",
-    course: "Database Systems",
-    code: "CS301",
-    date: new Date("2023-12-25"),
-    startTime: "09:00",
-    endTime: "11:00",
-    venue: "Hall D",
-    type: "final",
-  },
-]
+// Define the type for our data
+type Exam = {
+  id: string
+  course: {
+    code: string
+    name: string
+  }
+  date: Date
+  startTime: string
+  endTime: string
+  venue: string
+  type: "midterm" | "final" | "quiz" | "other"
+}
 
 export function DateSheetCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date())
+  const [exams, setExams] = useState<Exam[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  // Fetch exams data
+  useEffect(() => {
+    async function fetchExams() {
+      try {
+        setLoading(true)
+        const response = await fetch("/api/user/exams")
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch exams")
+        }
+
+        const data = await response.json()
+
+        // Transform the data to match our Exam type
+        const formattedExams = data.map((exam: any) => ({
+          id: exam._id,
+          course: {
+            code: exam.courseId.code,
+            name: exam.courseId.name,
+          },
+          date: new Date(exam.date),
+          startTime: exam.startTime,
+          endTime: exam.endTime,
+          venue: exam.venue,
+          type: exam.type,
+        }))
+
+        setExams(formattedExams)
+      } catch (err) {
+        console.error("Error fetching exams:", err)
+        setError("Failed to load exams. Please try again.")
+        toast({
+          title: "Error",
+          description: "Failed to load exams. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchExams()
+  }, [toast])
 
   // Get exams for the selected date
   const selectedDateExams = exams.filter((exam) => date && exam.date.toDateString() === date.toDateString())
@@ -68,6 +79,24 @@ export function DateSheetCalendar() {
   // Function to highlight dates with exams
   const isDayWithExam = (day: Date) => {
     return exams.some((exam) => exam.date.toDateString() === day.toDateString())
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2">Loading exams...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-48 flex-col items-center justify-center gap-4 rounded-md border border-dashed p-8 text-center">
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    )
   }
 
   return (
@@ -106,12 +135,12 @@ export function DateSheetCalendar() {
             {selectedDateExams.map((exam) => (
               <div key={exam.id} className="rounded-lg border p-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">{exam.code}</h3>
+                  <h3 className="font-semibold">{exam.course.code}</h3>
                   <Badge variant={exam.type === "final" ? "default" : "secondary"}>
                     {exam.type.charAt(0).toUpperCase() + exam.type.slice(1)}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{exam.course}</p>
+                <p className="text-sm text-muted-foreground">{exam.course.name}</p>
                 <div className="mt-2 flex flex-col gap-1 text-sm">
                   <div>
                     Time: {exam.startTime} - {exam.endTime}

@@ -11,6 +11,7 @@ import dbConnect from "@/lib/mongodb"
 import Exam from "@/models/Exam"
 import Course from "@/models/Course"
 import ClashReport from "@/models/ClashReport"
+import { User } from "@/lib/types"
 
 async function getUpcomingExams(userId: string, role: string) {
   await dbConnect()
@@ -69,7 +70,7 @@ async function getUpcomingExams(userId: string, role: string) {
 async function getClashReports(userId: string, role: string) {
   await dbConnect()
 
-  let clashReports = []
+  let clashReports: number = 0
 
   if (role === "student") {
     // For students, get their own clash reports
@@ -93,6 +94,7 @@ export default async function DashboardPage() {
   if (!session) {
     return null
   }
+  const user = session.user as User
 
   const upcomingExams = await getUpcomingExams(session.user.id, session.user.role)
   const pendingClashReports = await getClashReports(session.user.id, session.user.role)
@@ -113,8 +115,9 @@ export default async function DashboardPage() {
     ? Math.ceil((nextExamDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
     : null
 
+
   return (
-    <DashboardShell user={session.user}>
+    <DashboardShell user={user}>
       <div className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">

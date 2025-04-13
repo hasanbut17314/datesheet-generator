@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Search } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Search, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,12 +26,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast"
 
-// Define the type for our data
 type Exam = {
   id: string
-  course: string
-  code: string
+  course: {
+    code: string
+    name: string
+  }
   date: string
   startTime: string
   endTime: string
@@ -40,161 +42,156 @@ type Exam = {
   status: "scheduled" | "completed" | "cancelled" | "rescheduled"
 }
 
-// Sample data
-const data: Exam[] = [
-  {
-    id: "1",
-    course: "Introduction to Computer Science",
-    code: "CS101",
-    date: "2023-12-15",
-    startTime: "09:00",
-    endTime: "11:00",
-    venue: "Hall A",
-    type: "final",
-    status: "scheduled",
-  },
-  {
-    id: "2",
-    course: "Calculus II",
-    code: "MATH201",
-    date: "2023-12-18",
-    startTime: "13:00",
-    endTime: "15:00",
-    venue: "Hall B",
-    type: "final",
-    status: "scheduled",
-  },
-  {
-    id: "3",
-    course: "Physics I",
-    code: "PHY101",
-    date: "2023-12-20",
-    startTime: "10:00",
-    endTime: "12:00",
-    venue: "Hall C",
-    type: "final",
-    status: "scheduled",
-  },
-  {
-    id: "4",
-    course: "Data Structures",
-    code: "CS201",
-    date: "2023-12-22",
-    startTime: "14:00",
-    endTime: "16:00",
-    venue: "Hall A",
-    type: "final",
-    status: "scheduled",
-  },
-  {
-    id: "5",
-    course: "Database Systems",
-    code: "CS301",
-    date: "2023-12-25",
-    startTime: "09:00",
-    endTime: "11:00",
-    venue: "Hall D",
-    type: "final",
-    status: "scheduled",
-  },
-]
+interface ExamListProps {
+  dateSheetId: string
+}
 
-// Define the columns
-const columns: ColumnDef<Exam>[] = [
-  {
-    accessorKey: "code",
-    header: "Code",
-    cell: ({ row }) => <div className="font-medium">{row.getValue("code")}</div>,
-  },
-  {
-    accessorKey: "course",
-    header: ({ column }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Course
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-  },
-  {
-    accessorKey: "date",
-    header: ({ column }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-  },
-  {
-    accessorKey: "startTime",
-    header: "Start Time",
-  },
-  {
-    accessorKey: "endTime",
-    header: "End Time",
-  },
-  {
-    accessorKey: "venue",
-    header: "Venue",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string
-      return (
-        <Badge
-          variant={
-            status === "scheduled"
-              ? "default"
-              : status === "completed"
-                ? "secondary"
-                : status === "cancelled"
-                  ? "destructive"
-                  : "outline"
-          }
-        >
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Badge>
-      )
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const exam = row.original
+export function ExamList({ dateSheetId }: ExamListProps) {
+  const [exams, setExams] = useState<Exam[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(exam.id)}>Copy ID</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit Exam</DropdownMenuItem>
-            <DropdownMenuItem>Reschedule</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Cancel Exam</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
+  // Fetch exams data
+  useEffect(() => {
+    async function fetchExams() {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/exams?dateSheetId=${dateSheetId}`)
 
-export function ExamList() {
+        if (!response.ok) {
+          throw new Error("Failed to fetch exams")
+        }
+
+        const data = await response.json()
+
+        // Transform the data to match our Exam type
+        const formattedExams = data.map((exam: any) => ({
+          id: exam._id,
+          course: {
+            code: exam.courseId.code,
+            name: exam.courseId.name,
+          },
+          date: new Date(exam.date).toISOString().split("T")[0], // Format as YYYY-MM-DD
+          startTime: exam.startTime,
+          endTime: exam.endTime,
+          venue: exam.venue,
+          type: exam.type,
+          status: exam.status,
+        }))
+
+        setExams(formattedExams)
+      } catch (err) {
+        console.error("Error fetching exams:", err)
+        setError("Failed to load exams. Please try again.")
+        toast({
+          title: "Error",
+          description: "Failed to load exams. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchExams()
+  }, [dateSheetId, toast])
+
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
+  // Define the columns
+  const columns: ColumnDef<Exam>[] = [
+    {
+      accessorKey: "course.code",
+      header: "Code",
+      cell: ({ row }) => <div className="font-medium">{row.getValue("course.code")}</div>,
+    },
+    {
+      accessorKey: "course.name",
+      header: ({ column }) => {
+        return (
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+            Course
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    },
+    {
+      accessorKey: "date",
+      header: ({ column }) => {
+        return (
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+            Date
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+    },
+    {
+      accessorKey: "startTime",
+      header: "Start Time",
+    },
+    {
+      accessorKey: "endTime",
+      header: "End Time",
+    },
+    {
+      accessorKey: "venue",
+      header: "Venue",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string
+        return (
+          <Badge
+            variant={
+              status === "scheduled"
+                ? "default"
+                : status === "completed"
+                  ? "secondary"
+                  : status === "cancelled"
+                    ? "destructive"
+                    : "outline"
+            }
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        )
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const exam = row.original
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(exam.id)}>Copy ID</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Edit Exam</DropdownMenuItem>
+              <DropdownMenuItem>Reschedule</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">Cancel Exam</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+
   const table = useReactTable({
-    data,
+    data: exams,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -208,6 +205,24 @@ export function ExamList() {
     },
   })
 
+  if (loading) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2">Loading exams...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-48 flex-col items-center justify-center gap-4 rounded-md border border-dashed p-8 text-center">
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="flex items-center py-4">
@@ -215,8 +230,8 @@ export function ExamList() {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search courses..."
-            value={(table.getColumn("course")?.getFilterValue() as string) ?? ""}
-            onChange={(event) => table.getColumn("course")?.setFilterValue(event.target.value)}
+            value={(table.getColumn("course.name")?.getFilterValue() as string) ?? ""}
+            onChange={(event) => table.getColumn("course.name")?.setFilterValue(event.target.value)}
             className="pl-8"
           />
         </div>
@@ -248,7 +263,7 @@ export function ExamList() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  No exams found for this datesheet.
                 </TableCell>
               </TableRow>
             )}
