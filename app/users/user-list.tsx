@@ -29,8 +29,17 @@ import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { EditUserDialog } from "./edit-user-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
-// Define the type for our data
 type User = {
     id: string
     name: string
@@ -48,6 +57,9 @@ export function UserList() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [userToDelete, setUserToDelete] = useState<User | null>(null)
     const { toast } = useToast()
 
     // Fetch users data
@@ -98,13 +110,16 @@ export function UserList() {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
-    async function handleDeleteUser(userId: string) {
-        if (!confirm("Are you sure you want to delete this user?")) {
-            return
-        }
+    async function handleDeleteUser(user: User) {
+        setUserToDelete(user)
+        setIsDeleteDialogOpen(true)
+    }
+
+    async function confirmDelete() {
+        if (!userToDelete) return
 
         try {
-            const response = await fetch(`/api/users/${userId}`, {
+            const response = await fetch(`/api/users/${userToDelete.id}`, {
                 method: "DELETE",
             })
 
@@ -113,7 +128,7 @@ export function UserList() {
             }
 
             // Remove the user from the state
-            setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId))
+            setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userToDelete.id))
 
             toast({
                 title: "Success",
@@ -126,6 +141,9 @@ export function UserList() {
                 description: "Failed to delete user. Please try again.",
                 variant: "destructive",
             })
+        } finally {
+            setIsDeleteDialogOpen(false)
+            setUserToDelete(null)
         }
     }
 
@@ -206,7 +224,7 @@ export function UserList() {
                             <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.id)}>Copy ID</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setEditingUser(user)}>Edit User</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
+                            <DropdownMenuItem onClick={() => handleDeleteUser(user)} className="text-destructive">
                                 Delete User
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -309,16 +327,35 @@ export function UserList() {
             {editingUser && (
                 <EditUserDialog
                     user={editingUser}
-                    open={!!editingUser}
-                    onOpenChange={(open) => {
-                        if (!open) setEditingUser(null)
-                    }}
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
                     onUserUpdated={(updatedUser) => {
                         setUsers((prevUsers) => prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user)))
                         setEditingUser(null)
                     }}
                 />
             )}
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the user{" "}
+                            <span className="font-semibold">{userToDelete?.name}</span> and all their data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

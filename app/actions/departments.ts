@@ -8,7 +8,13 @@ import Department from "@/models/Department"
 export async function createDepartment(data: { name: string; code: string }) {
     await connectToDatabase()
     const department = await Department.create(data)
-    return department
+    return {
+        _id: department._id.toString(),
+        name: department.name,
+        code: department.code,
+        createdAt: department.createdAt.toISOString(),
+        updatedAt: department.updatedAt.toISOString()
+    }
 }
 
 export async function deleteDepartment(id: string) {

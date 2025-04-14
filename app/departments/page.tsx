@@ -1,10 +1,10 @@
-import { getDepartments, createDepartment } from "@/app/actions/departments"
-import { DepartmentForm } from "@/components/DepartmentForm"
+import { getDepartments } from "@/app/actions/departments"
 import { DepartmentsList } from "@/components/DepartmentsList"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { User } from "@/lib/types"
+import { DepartmentFormWrapper } from "@/components/DepartmentFormWrapper"
 
 export default async function DepartmentsPage() {
     const session = await getServerSession(authOptions)
@@ -29,7 +29,7 @@ export default async function DepartmentsPage() {
                     <h1 className="text-3xl font-bold">Departments</h1>
                 </div>
                 <div className="grid gap-6 md:grid-cols-2">
-                    <DepartmentForm onSubmit={createDepartment} />
+                    <DepartmentFormWrapper />
                     <DepartmentsList departments={departments} />
                 </div>
             </div>

@@ -71,7 +71,6 @@ export async function updateUser(formData: FormData) {
             return { error: "User ID is required" }
         }
 
-        // Create an object with only the fields that are present
         const updateData: any = {}
         updateData.name = formData.get("name")
         updateData.email = formData.get("email")
@@ -82,7 +81,7 @@ export async function updateUser(formData: FormData) {
             updateData.password = password
         }
 
-        const departmentId = formData.get("departmentId")
+        const departmentId = formData.get("departmentId") as string | null
         if (departmentId && typeof departmentId === "string" && departmentId.length > 0) {
             updateData.departmentId = departmentId
         } else if (updateData.role === "admin") {
@@ -103,14 +102,22 @@ export async function updateUser(formData: FormData) {
             }
         }
 
-        // Update user
         const user = await User.findByIdAndUpdate(id, validatedFields, { new: true })
 
         if (!user) {
             return { error: "User not found" }
         }
 
-        return { success: true, user }
+        const userObject = user.toObject()
+        delete userObject.password
+        delete userObject.__v
+
+        userObject._id = userObject._id.toString()
+        if (userObject.departmentId) {
+            userObject.departmentId = userObject.departmentId.toString()
+        }
+
+        return { success: true, user: userObject }
     } catch (error) {
         if (error instanceof z.ZodError) {
             return { error: error.errors[0].message }
