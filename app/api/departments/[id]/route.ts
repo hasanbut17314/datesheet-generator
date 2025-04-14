@@ -41,6 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json(department)
   } catch (error: any) {
+    console.error("Error updating department:", error)
     return NextResponse.json({ error: error.message || "Failed to update department" }, { status: 500 })
   }
 }
@@ -63,6 +64,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     return NextResponse.json({ message: "Department deleted successfully" })
   } catch (error) {
+    console.error("Error deleting department:", error)
     return NextResponse.json({ error: "Failed to delete department" }, { status: 500 })
   }
 }

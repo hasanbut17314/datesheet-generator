@@ -9,6 +9,14 @@ export interface IExam extends Document {
   venue: string
   type: "midterm" | "final" | "quiz" | "other"
   status: "scheduled" | "completed" | "cancelled" | "rescheduled"
+  facultyId: mongoose.Types.ObjectId
+  roomCapacity: number
+  requiredResources: string[]
+  duration: number // in minutes
+  isOnline: boolean
+  maxStudents: number
+  prerequisites: string[]
+  notes: string
 }
 
 const ExamSchema = new Schema<IExam>(
@@ -48,6 +56,37 @@ const ExamSchema = new Schema<IExam>(
       type: String,
       enum: ["scheduled", "completed", "cancelled", "rescheduled"],
       default: "scheduled",
+    },
+    facultyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Please provide a faculty member"],
+    },
+    roomCapacity: {
+      type: Number,
+      required: [true, "Please provide room capacity"],
+    },
+    requiredResources: [{
+      type: String,
+    }],
+    duration: {
+      type: Number,
+      required: [true, "Please provide exam duration in minutes"],
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    maxStudents: {
+      type: Number,
+      required: [true, "Please provide maximum number of students"],
+    },
+    prerequisites: [{
+      type: String,
+    }],
+    notes: {
+      type: String,
+      maxlength: [500, "Notes cannot be more than 500 characters"],
     },
   },
   { timestamps: true },

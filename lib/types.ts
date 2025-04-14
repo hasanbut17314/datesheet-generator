@@ -1,7 +1,7 @@
 export type UserRole = "student" | "admin" | "faculty"
 
 export interface User {
-  id: string
+  _id: string
   name: string
   email: string
   role: UserRole
@@ -9,9 +9,11 @@ export interface User {
 }
 
 export interface Department {
-  id: string
+  _id: string
   name: string
   code: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Course {
