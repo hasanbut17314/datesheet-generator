@@ -14,11 +14,21 @@ export interface IDateSheet extends Document {
   notificationSent: boolean
   version: number
   notes: string
+  examTimings: {
+    morningStart: string
+    morningEnd: string
+    afternoonStart: string
+    afternoonEnd: string
+  }
   constraints: {
     minGapBetweenExams: number // in hours
     maxExamsPerDay: number
     preferredDays: string[]
     blackoutDates: Date[]
+    maxExamsPerStudentPerDay: number
+    maxExamsPerFacultyPerDay: number
+    minGapBetweenSameFacultyExams: number // in hours
+    minGapBetweenSameStudentExams: number // in hours
   }
 }
 
@@ -60,6 +70,7 @@ const DateSheetSchema = new Schema<IDateSheet>(
     examPeriod: {
       type: String,
       required: [true, "Please provide exam period"],
+      enum: ["Mid", "Final"],
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -82,6 +93,28 @@ const DateSheetSchema = new Schema<IDateSheet>(
       type: String,
       maxlength: [1000, "Notes cannot be more than 1000 characters"],
     },
+    examTimings: {
+      morningStart: {
+        type: String,
+        required: [true, "Please provide morning exam start time"],
+        default: "09:00",
+      },
+      morningEnd: {
+        type: String,
+        required: [true, "Please provide morning exam end time"],
+        default: "12:00",
+      },
+      afternoonStart: {
+        type: String,
+        required: [true, "Please provide afternoon exam start time"],
+        default: "14:00",
+      },
+      afternoonEnd: {
+        type: String,
+        required: [true, "Please provide afternoon exam end time"],
+        default: "17:00",
+      },
+    },
     constraints: {
       minGapBetweenExams: {
         type: Number,
@@ -98,6 +131,22 @@ const DateSheetSchema = new Schema<IDateSheet>(
       blackoutDates: [{
         type: Date,
       }],
+      maxExamsPerStudentPerDay: {
+        type: Number,
+        default: 1,
+      },
+      maxExamsPerFacultyPerDay: {
+        type: Number,
+        default: 1,
+      },
+      minGapBetweenSameFacultyExams: {
+        type: Number,
+        default: 24,
+      },
+      minGapBetweenSameStudentExams: {
+        type: Number,
+        default: 24,
+      },
     },
   },
   { timestamps: true },

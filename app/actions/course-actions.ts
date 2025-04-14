@@ -43,7 +43,20 @@ export async function createCourse(formData: FormData) {
         // Create new course
         const course = await Course.create(validatedFields)
 
-        return { success: true, course }
+        // Convert MongoDB document to plain object and remove sensitive fields
+        const courseObject = course.toObject()
+        delete courseObject.__v
+
+        // Convert ObjectIds to strings
+        courseObject._id = courseObject._id.toString()
+        if (courseObject.departmentId) {
+            courseObject.departmentId = courseObject.departmentId.toString()
+        }
+        if (courseObject.facultyId) {
+            courseObject.facultyId = courseObject.facultyId.toString()
+        }
+
+        return { success: true, course: courseObject }
     } catch (error) {
         if (error instanceof z.ZodError) {
             return { error: error.errors[0].message }
@@ -89,7 +102,20 @@ export async function updateCourse(formData: FormData) {
             return { error: "Course not found" }
         }
 
-        return { success: true, course }
+        // Convert MongoDB document to plain object and remove sensitive fields
+        const courseObject = course.toObject()
+        delete courseObject.__v
+
+        // Convert ObjectIds to strings
+        courseObject._id = courseObject._id.toString()
+        if (courseObject.departmentId) {
+            courseObject.departmentId = courseObject.departmentId.toString()
+        }
+        if (courseObject.facultyId) {
+            courseObject.facultyId = courseObject.facultyId.toString()
+        }
+
+        return { success: true, course: courseObject }
     } catch (error) {
         if (error instanceof z.ZodError) {
             return { error: error.errors[0].message }

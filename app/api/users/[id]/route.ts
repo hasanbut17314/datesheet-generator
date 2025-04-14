@@ -62,12 +62,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
         await dbConnect()
 
+        const userId = params.id
         // Don't allow deleting yourself
-        if (session.user.id === params.id) {
+        if (session.user.id === userId) {
             return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 })
         }
 
-        const user = await User.findByIdAndDelete(params.id)
+        const user = await User.findByIdAndDelete(userId)
 
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })

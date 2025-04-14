@@ -12,7 +12,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Search, Loader2 } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Search, Loader2, Pencil, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,6 +28,16 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { EditCourseDialog } from "./edit-course-dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Define the type for our data
 type Course = {
@@ -57,6 +67,9 @@ export function CourseList({ userRole, userId }: CourseListProps) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
     const { toast } = useToast()
 
     // Fetch courses data
@@ -112,13 +125,16 @@ export function CourseList({ userRole, userId }: CourseListProps) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
-    async function handleDeleteCourse(courseId: string) {
-        if (!confirm("Are you sure you want to delete this course?")) {
-            return
-        }
+    async function handleDeleteCourse(course: Course) {
+        setCourseToDelete(course)
+        setIsDeleteDialogOpen(true)
+    }
+
+    async function confirmDelete() {
+        if (!courseToDelete) return
 
         try {
-            const response = await fetch(`/api/courses/${courseId}`, {
+            const response = await fetch(`/api/courses/${courseToDelete.id}`, {
                 method: "DELETE",
             })
 
@@ -127,7 +143,7 @@ export function CourseList({ userRole, userId }: CourseListProps) {
             }
 
             // Remove the course from the state
-            setCourses((prevCourses) => prevCourses.filter((course) => course.id !== courseId))
+            setCourses((prevCourses) => prevCourses.filter((c) => c.id !== courseToDelete.id))
 
             toast({
                 title: "Success",
@@ -140,6 +156,9 @@ export function CourseList({ userRole, userId }: CourseListProps) {
                 description: "Failed to delete course. Please try again.",
                 variant: "destructive",
             })
+        } finally {
+            setIsDeleteDialogOpen(false)
+            setCourseToDelete(null)
         }
     }
 
@@ -208,7 +227,7 @@ export function CourseList({ userRole, userId }: CourseListProps) {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setEditingCourse(course)}>Edit Course</DropdownMenuItem>
                             {userRole === "admin" && (
-                                <DropdownMenuItem onClick={() => handleDeleteCourse(course.id)} className="text-destructive">
+                                <DropdownMenuItem onClick={() => handleDeleteCourse(course)} className="text-destructive">
                                     Delete Course
                                 </DropdownMenuItem>
                             )}
@@ -312,10 +331,8 @@ export function CourseList({ userRole, userId }: CourseListProps) {
             {editingCourse && (
                 <EditCourseDialog
                     course={editingCourse}
-                    open={!!editingCourse}
-                    onOpenChange={(open) => {
-                        if (!open) setEditingCourse(null)
-                    }}
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
                     onCourseUpdated={(updatedCourse) => {
                         setCourses((prevCourses) =>
                             prevCourses.map((course) => (course.id === updatedCourse.id ? updatedCourse : course)),
@@ -324,6 +341,27 @@ export function CourseList({ userRole, userId }: CourseListProps) {
                     }}
                 />
             )}
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the course{" "}
+                            <span className="font-semibold">{courseToDelete?.name}</span> and all its data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

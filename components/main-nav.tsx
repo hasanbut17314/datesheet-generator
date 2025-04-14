@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
     title: "Datesheets",
     path: "/datesheets",
     icon: Calendar,
-    roles: ["student", "admin", "faculty"],
+    roles: ["admin"],
   },
   {
     title: "Departments",
