@@ -12,6 +12,7 @@ import Exam from "@/models/Exam"
 import Course from "@/models/Course"
 import ClashReport from "@/models/ClashReport"
 import { User } from "@/lib/types"
+import { ReportClashForm } from "@/components/ReportClashForm"
 
 async function getUpcomingExams(userId: string, role: string) {
   await dbConnect()
@@ -94,7 +95,7 @@ export default async function DashboardPage() {
   if (!session) {
     return null
   }
-  const user = session.user as User
+  const user = session.user as unknown as User
 
   const upcomingExams = await getUpcomingExams(session.user.id, session.user.role)
   const pendingClashReports = await getClashReports(session.user.id, session.user.role)
@@ -251,6 +252,11 @@ export default async function DashboardPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        {session.user.role === "student" && (
+          <div className="mt-4">
+            <ReportClashForm />
+          </div>
+        )}
       </div>
     </DashboardShell>
   )

@@ -2,7 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { CalendarIcon, Clock } from "lucide-react"
+import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
@@ -62,6 +62,7 @@ export function CreateDateSheetForm() {
   const { toast } = useToast()
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -111,6 +112,7 @@ export function CreateDateSheetForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setSubmitting(true)
     try {
       const response = await fetch("/api/datesheets", {
         method: "POST",
@@ -137,6 +139,8 @@ export function CreateDateSheetForm() {
         description: "Failed to create datesheet. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -550,7 +554,9 @@ export function CreateDateSheetForm() {
           />
         </div>
 
-        <Button type="submit">Create Datesheet</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Creating..." : "Create Datesheet"}
+        </Button>
       </form>
     </Form>
   )

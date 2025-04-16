@@ -41,16 +41,21 @@ export async function deleteDateSheet(id: string) {
 
 export async function getDateSheets(): Promise<DateSheet[]> {
     await connectToDatabase()
-    const dateSheets = await DateSheetModel.find().sort({ createdAt: -1 })
+    const dateSheets = await DateSheetModel.find().sort({ createdAt: -1 }).populate("departmentId", "name code")
+
     return dateSheets.map(doc => ({
         id: doc._id.toString(),
         name: doc.name,
-        departmentId: doc.departmentId,
+        departmentId: doc.departmentId ? {
+            id: doc.departmentId._id.toString(),
+            name: doc.departmentId.name,
+            code: doc.departmentId.code
+        } : doc.departmentId.toString(),
         semester: doc.semester,
         startDate: doc.startDate.toISOString(),
         endDate: doc.endDate.toISOString(),
         status: doc.status,
-        exams: doc.exams
+        exams: doc.exams || []
     }))
 }
 

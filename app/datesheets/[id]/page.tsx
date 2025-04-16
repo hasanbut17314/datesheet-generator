@@ -3,14 +3,17 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExamList } from "@/app/admin/datesheets/[id]/exam-list"
-import { AddExamForm } from "@/app/admin/datesheets/[id]/add-exam-form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ExamList } from "./exam-list"
+import { AddExamForm } from "./add-exam-form"
+import { DateSheetManager } from "@/components/DateSheetManager"
 import { redirect } from "next/navigation"
 import dbConnect from "@/lib/mongodb"
 import DateSheet from "@/models/DateSheet"
 import { User } from "@/lib/types"
+import { DateSheetConstraints } from "@/components/DatesheetConstraints"
+import { ClashReportsList } from "@/components/ClashReportList"
 
 export default async function DateSheetDetailPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -23,13 +26,20 @@ export default async function DateSheetDetailPage({ params }: { params: { id: st
     redirect("/dashboard")
   }
 
-  const user = session.user as User
+  const user = session.user as unknown as User
 
   await dbConnect()
   const datesheet = await DateSheet.findById(params.id).populate("departmentId", "name")
 
   if (!datesheet) {
-    redirect("/admin/datesheets")
+    redirect("/datesheets")
+  }
+
+  const publishDateSheet = async () => {
+    "use server"
+    await dbConnect()
+    await DateSheet.findByIdAndUpdate(params.id, { status: "published" })
+    redirect(`/datesheets/${params.id}`)
   }
 
   return (
@@ -50,7 +60,11 @@ export default async function DateSheetDetailPage({ params }: { params: { id: st
             >
               {datesheet.status.charAt(0).toUpperCase() + datesheet.status.slice(1)}
             </Badge>
-            {datesheet.status === "draft" && <Button>Publish Datesheet</Button>}
+            {datesheet.status === "draft" && (
+              <form action={publishDateSheet}>
+                <Button type="submit">Publish Datesheet</Button>
+              </form>
+            )}
           </div>
         </div>
 
@@ -58,6 +72,8 @@ export default async function DateSheetDetailPage({ params }: { params: { id: st
           <TabsList>
             <TabsTrigger value="exams">Exams</TabsTrigger>
             <TabsTrigger value="add">Add Exam</TabsTrigger>
+            <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
+            <TabsTrigger value="constraints">Constraints</TabsTrigger>
             <TabsTrigger value="clashes">Clashes</TabsTrigger>
           </TabsList>
           <TabsContent value="exams" className="mt-4">
@@ -82,14 +98,28 @@ export default async function DateSheetDetailPage({ params }: { params: { id: st
               </CardContent>
             </Card>
           </TabsContent>
+          <TabsContent value="scheduling" className="mt-4">
+            <DateSheetManager dateSheetId={params.id} />
+          </TabsContent>
+          <TabsContent value="constraints" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Scheduling Constraints</CardTitle>
+                <CardDescription>Update constraints for automatic scheduling.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DateSheetConstraints dateSheet={datesheet} />
+              </CardContent>
+            </Card>
+          </TabsContent>
           <TabsContent value="clashes" className="mt-4">
             <Card>
               <CardHeader>
                 <CardTitle>Exam Clashes</CardTitle>
-                <CardDescription>View and resolve exam scheduling conflicts.</CardDescription>
+                <CardDescription>View and resolve reported exam clashes.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">No clashes detected in this datesheet.</p>
+                <ClashReportsList dateSheetId={params.id} />
               </CardContent>
             </Card>
           </TabsContent>

@@ -7,6 +7,7 @@ import { DateSheetList } from "@/components/DateSheetList"
 import { CreateDateSheetForm } from "@/components/create-datesheet-form"
 import { redirect } from "next/navigation"
 import { User } from "@/lib/types"
+import { getDateSheets } from "@/app/actions/datesheets"
 
 export default async function AdminDateSheetsPage() {
   const session = await getServerSession(authOptions)
@@ -20,6 +21,8 @@ export default async function AdminDateSheetsPage() {
   }
 
   const user = session.user as unknown as User
+
+  const dateSheets = await getDateSheets()
 
   return (
     <DashboardShell user={user}>
@@ -39,7 +42,7 @@ export default async function AdminDateSheetsPage() {
                 <CardDescription>View and manage all examination schedules.</CardDescription>
               </CardHeader>
               <CardContent>
-                <DateSheetList />
+                <DateSheetList dateSheets={dateSheets} />
               </CardContent>
             </Card>
           </TabsContent>

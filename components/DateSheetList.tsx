@@ -51,7 +51,11 @@ export function DateSheetList({ dateSheets = [] }: DateSheetListProps) {
                         {dateSheets.map((dateSheet) => (
                             <TableRow key={dateSheet.id}>
                                 <TableCell>{dateSheet.name}</TableCell>
-                                <TableCell>{dateSheet.departmentId}</TableCell>
+                                <TableCell>
+                                    {typeof dateSheet.departmentId === 'object' && dateSheet.departmentId !== null
+                                        ? dateSheet.departmentId.name
+                                        : dateSheet.departmentId}
+                                </TableCell>
                                 <TableCell>{dateSheet.semester}</TableCell>
                                 <TableCell>{new Date(dateSheet.startDate).toLocaleDateString()}</TableCell>
                                 <TableCell>{new Date(dateSheet.endDate).toLocaleDateString()}</TableCell>

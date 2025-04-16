@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose"
 
 export interface ICourse extends Document {
+  _id: string
   code: string
   name: string
   departmentId: mongoose.Types.ObjectId

@@ -108,7 +108,8 @@ export function ExamList({ dateSheetId }: ExamListProps) {
       cell: ({ row }) => <div className="font-medium">{row.getValue("course.code")}</div>,
     },
     {
-      accessorKey: "course.name",
+      id: "course.name",
+      accessorFn: (row) => row.course.name,
       header: ({ column }) => {
         return (
           <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>

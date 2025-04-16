@@ -12,7 +12,8 @@ import {
   Settings,
   Building2,
   Menu,
-  X
+  X,
+  Clock
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "./ui/button"
@@ -54,6 +55,12 @@ const navItems: NavItem[] = [
     path: "/users",
     icon: Users,
     roles: ["admin"],
+  },
+  {
+    title: "Availability",
+    path: "/availability",
+    icon: Clock,
+    roles: ["faculty"],
   },
   {
     title: "Settings",

@@ -49,8 +49,13 @@ export async function POST(req: NextRequest) {
 
     await dbConnect()
     const data = await req.json()
+    const dateSheetData = {
+      ...data,
+      createdBy: session.user.id,
+      lastModifiedBy: session.user.id
+    }
 
-    const datesheet = await DateSheet.create(data)
+    const datesheet = await DateSheet.create(dateSheetData)
     return NextResponse.json(datesheet, { status: 201 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to create datesheet" }, { status: 500 })

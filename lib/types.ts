@@ -50,10 +50,10 @@ export interface ClashReport {
 export interface DateSheet {
   id: string
   name: string
-  departmentId: string
+  departmentId: string | { id: string; name: string; code: string }
   semester: number
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
   status: "draft" | "published" | "archived"
   exams: Exam[]
 }
