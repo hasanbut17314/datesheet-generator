@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { CalendarRange, CheckCircle } from "lucide-react"
-
+import { getServerSession } from "next-auth"
+import { authOptions } from "./api/auth/[...nextauth]/route"
 import { Button } from "@/components/ui/button"
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions)
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-16 flex items-center">
@@ -12,12 +14,20 @@ export default function Home() {
           <span className="font-bold">Datesheet Generator</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
-            Log In
-          </Link>
-          <Link href="/register" className="text-sm font-medium hover:underline underline-offset-4">
-            Sign Up
-          </Link>
+          {session ? (
+            <Link href="/dashboard" className="text-sm font-medium hover:underline underline-offset-4">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
+                Log In
+              </Link>
+              <Link href="/register" className="text-sm font-medium hover:underline underline-offset-4">
+                Sign Up
+              </Link>
+            </>
+          )}
         </nav>
       </header>
       <main className="flex-1">
@@ -35,16 +45,18 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/register">
+                  <Link href={session ? "/dashboard" : "/register"}>
                     <Button size="lg" className="bg-brand-600 hover:bg-brand-700">
                       Get Started
                     </Button>
                   </Link>
-                  <Link href="/login">
-                    <Button size="lg" variant="outline">
-                      Log In
-                    </Button>
-                  </Link>
+                  {!session && (
+                    <Link href="/login">
+                      <Button size="lg" variant="outline">
+                        Log In
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-center">

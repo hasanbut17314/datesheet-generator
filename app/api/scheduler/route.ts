@@ -377,5 +377,5 @@ function getDatesInRange(startDate: Date, endDate: Date) {
 }
 
 function getDayName(date: Date) {
-    return date.toLocaleDateString('en-US', { weekday: 'long' })
+    return date.toLocaleDateString('en-PK', { weekday: 'long' })
 }

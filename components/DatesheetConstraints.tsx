@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
-import { IDateSheet } from "@/models/DateSheet"
 
 const constraintsSchema = z.object({
     minGapBetweenExams: z.coerce.number().min(0).max(24),
@@ -27,28 +26,38 @@ const constraintsSchema = z.object({
     minGapBetweenSameStudentExams: z.coerce.number().min(1).max(72)
 })
 
-export function DateSheetConstraints({ dateSheet }: { dateSheet: IDateSheet }) {
+export function DateSheetConstraints({
+    constraints,
+    dateSheetId,
+    startDate,
+    endDate
+}: {
+    constraints: z.infer<typeof constraintsSchema> | null,
+    dateSheetId: string,
+    startDate: Date,
+    endDate: Date
+}) {
     const [isLoading, setIsLoading] = useState(false)
     const { toast } = useToast()
 
     const form = useForm<z.infer<typeof constraintsSchema>>({
         resolver: zodResolver(constraintsSchema),
         defaultValues: {
-            minGapBetweenExams: dateSheet.constraints?.minGapBetweenExams || 2,
-            maxExamsPerDay: dateSheet.constraints?.maxExamsPerDay || 2,
-            preferredDays: dateSheet.constraints?.preferredDays || [],
-            blackoutDates: dateSheet.constraints?.blackoutDates?.map((date: any) => new Date(date)) || [],
-            maxExamsPerStudentPerDay: dateSheet.constraints?.maxExamsPerStudentPerDay || 1,
-            maxExamsPerFacultyPerDay: dateSheet.constraints?.maxExamsPerFacultyPerDay || 1,
-            minGapBetweenSameFacultyExams: dateSheet.constraints?.minGapBetweenSameFacultyExams || 24,
-            minGapBetweenSameStudentExams: dateSheet.constraints?.minGapBetweenSameStudentExams || 24
+            minGapBetweenExams: constraints?.minGapBetweenExams ?? 2,
+            maxExamsPerDay: constraints?.maxExamsPerDay ?? 2,
+            preferredDays: constraints?.preferredDays ?? [],
+            blackoutDates: constraints?.blackoutDates?.map((date: any) => new Date(date)) ?? [],
+            maxExamsPerStudentPerDay: constraints?.maxExamsPerStudentPerDay ?? 1,
+            maxExamsPerFacultyPerDay: constraints?.maxExamsPerFacultyPerDay ?? 1,
+            minGapBetweenSameFacultyExams: constraints?.minGapBetweenSameFacultyExams ?? 24,
+            minGapBetweenSameStudentExams: constraints?.minGapBetweenSameStudentExams ?? 24
         }
     })
 
     const onSubmit = async (values: z.infer<typeof constraintsSchema>) => {
         setIsLoading(true)
         try {
-            const response = await fetch(`/api/datesheets/${dateSheet._id}`, {
+            const response = await fetch(`/api/datesheets/${dateSheetId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -235,9 +244,7 @@ export function DateSheetConstraints({ dateSheet }: { dateSheet: IDateSheet }) {
                                             onSelect={field.onChange}
                                             disabled={(date) => {
                                                 // Can only select dates within the date sheet range
-                                                const startDate = new Date(dateSheet.startDate)
-                                                const endDate = new Date(dateSheet.endDate)
-                                                return date < startDate || date > endDate
+                                                return date < new Date(startDate) || date > new Date(endDate)
                                             }}
                                             initialFocus
                                         />

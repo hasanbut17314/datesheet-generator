@@ -108,7 +108,12 @@ export default async function DateSheetDetailPage({ params }: { params: { id: st
                 <CardDescription>Update constraints for automatic scheduling.</CardDescription>
               </CardHeader>
               <CardContent>
-                <DateSheetConstraints dateSheet={datesheet} />
+                <DateSheetConstraints
+                  constraints={datesheet.constraints ? JSON.parse(JSON.stringify(datesheet.constraints)) : null}
+                  dateSheetId={params.id}
+                  startDate={new Date(datesheet.startDate)}
+                  endDate={new Date(datesheet.endDate)}
+                />
               </CardContent>
             </Card>
           </TabsContent>

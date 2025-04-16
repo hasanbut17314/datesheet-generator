@@ -1,7 +1,4 @@
-// components/DateSheetManager.tsx
-
 "use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,7 +11,8 @@ interface DateSheetManagerProps {
 }
 
 export function DateSheetManager({ dateSheetId }: DateSheetManagerProps) {
-    const [isLoading, setIsLoading] = useState(false)
+    const [isDetectingConflicts, setIsDetectingConflicts] = useState(false)
+    const [isScheduling, setIsScheduling] = useState(false)
     const [conflicts, setConflicts] = useState<Array<{
         type: string
         description: string
@@ -24,7 +22,7 @@ export function DateSheetManager({ dateSheetId }: DateSheetManagerProps) {
 
     // Function to detect conflicts in the schedule
     const detectConflicts = async () => {
-        setIsLoading(true)
+        setIsDetectingConflicts(true)
         try {
             const response = await fetch(`/api/scheduler?dateSheetId=${dateSheetId}`)
 
@@ -49,13 +47,13 @@ export function DateSheetManager({ dateSheetId }: DateSheetManagerProps) {
                 variant: "destructive"
             })
         } finally {
-            setIsLoading(false)
+            setIsDetectingConflicts(false)
         }
     }
 
     // Function to automatically schedule exams
     const autoScheduleExams = async () => {
-        setIsLoading(true)
+        setIsScheduling(true)
         try {
             const response = await fetch("/api/scheduler", {
                 method: "POST",
@@ -92,7 +90,7 @@ export function DateSheetManager({ dateSheetId }: DateSheetManagerProps) {
                 variant: "destructive"
             })
         } finally {
-            setIsLoading(false)
+            setIsScheduling(false)
         }
     }
 
@@ -109,9 +107,9 @@ export function DateSheetManager({ dateSheetId }: DateSheetManagerProps) {
                     <div className="flex gap-4">
                         <Button
                             onClick={detectConflicts}
-                            disabled={isLoading}
+                            disabled={isDetectingConflicts || isScheduling}
                         >
-                            {isLoading ? (
+                            {isDetectingConflicts ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Detecting Conflicts...
@@ -122,10 +120,10 @@ export function DateSheetManager({ dateSheetId }: DateSheetManagerProps) {
                         </Button>
                         <Button
                             onClick={autoScheduleExams}
-                            disabled={isLoading}
+                            disabled={isDetectingConflicts || isScheduling}
                             variant="secondary"
                         >
-                            {isLoading ? (
+                            {isScheduling ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Scheduling Exams...
