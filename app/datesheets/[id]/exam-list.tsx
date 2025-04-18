@@ -102,11 +102,7 @@ export function ExamList({ dateSheetId }: ExamListProps) {
 
   // Define the columns
   const columns: ColumnDef<Exam>[] = [
-    {
-      accessorKey: "course.code",
-      header: "Code",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("course.code")}</div>,
-    },
+   
     {
       id: "course.name",
       accessorFn: (row) => row.course.name,
