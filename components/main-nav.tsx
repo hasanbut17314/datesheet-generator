@@ -13,7 +13,8 @@ import {
   Building2,
   Menu,
   X,
-  Clock
+  Clock,
+  Users2
 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "./ui/button"
@@ -42,6 +43,12 @@ const navItems: NavItem[] = [
     title: "Departments",
     path: "/departments",
     icon: Building2,
+    roles: ["admin"],
+  },
+  {
+    title: "Batches",
+    path: "/batches",
+    icon: Users2,
     roles: ["admin"],
   },
   {

@@ -16,6 +16,16 @@ export interface Department {
   updatedAt: string
 }
 
+export interface Batch {
+  _id: string
+  sessionYear: string
+  departmentId: string
+  departmentName: string
+  createdAt: string
+  updatedAt: string
+}
+
+
 export interface Course {
   id: string
   code: string
