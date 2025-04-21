@@ -25,9 +25,17 @@ import { Department } from "@/lib/types"
 const dateSheetSchema = z.object({
     name: z.string().min(1, "Name is required").max(100, "Name cannot be more than 100 characters"),
     departmentId: z.string().min(1, "Department is required"),
-    semester: z.number().min(1, "Semester is required").max(8, "Semester cannot be more than 8"),
+    semester: z.coerce.number().min(1, "Semester is required").max(8, "Semester cannot be more than 8"),
     startDate: z.string().min(1, "Start date is required"),
     endDate: z.string().min(1, "End date is required"),
+    constraints: z.object({
+        minGapBetweenExams: z.coerce.number().min(1).max(24),
+        maxExamsPerDay: z.coerce.number().min(1).max(4),
+        maxExamsPerStudentPerDay: z.coerce.number().min(1).max(2),
+        maxExamsPerFacultyPerDay: z.coerce.number().min(1).max(2),
+        minGapBetweenSameFacultyExams: z.coerce.number().min(1).max(72),
+        minGapBetweenSameStudentExams: z.coerce.number().min(1).max(72)
+    })
 })
 
 type DateSheetFormValues = z.infer<typeof dateSheetSchema>
@@ -53,6 +61,14 @@ export function CreateDateSheetForm() {
             semester: 1,
             startDate: "",
             endDate: "",
+            constraints: {
+                minGapBetweenExams: 2,
+                maxExamsPerDay: 2,
+                maxExamsPerStudentPerDay: 1,
+                maxExamsPerFacultyPerDay: 1,
+                minGapBetweenSameFacultyExams: 24,
+                minGapBetweenSameStudentExams: 24
+            }
         },
     })
 

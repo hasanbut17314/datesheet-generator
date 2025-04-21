@@ -114,12 +114,26 @@ export function CreateDateSheetForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setSubmitting(true)
     try {
+      // Convert string values to numbers for constraints
+      const processedValues = {
+        ...values,
+        constraints: {
+          ...values.constraints,
+          minGapBetweenExams: Number(values.constraints.minGapBetweenExams),
+          maxExamsPerDay: Number(values.constraints.maxExamsPerDay),
+          maxExamsPerStudentPerDay: Number(values.constraints.maxExamsPerStudentPerDay),
+          maxExamsPerFacultyPerDay: Number(values.constraints.maxExamsPerFacultyPerDay),
+          minGapBetweenSameFacultyExams: Number(values.constraints.minGapBetweenSameFacultyExams),
+          minGapBetweenSameStudentExams: Number(values.constraints.minGapBetweenSameStudentExams),
+        },
+      }
+
       const response = await fetch("/api/datesheets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(processedValues),
       })
 
       if (!response.ok) {
@@ -407,7 +421,14 @@ export function CreateDateSheetForm() {
                 <FormItem>
                   <FormLabel>Minimum Gap Between Exams (hours)</FormLabel>
                   <FormControl>
-                    <Input type="number" min={1} max={24} {...field} />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={24}
+                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -420,7 +441,14 @@ export function CreateDateSheetForm() {
                 <FormItem>
                   <FormLabel>Maximum Exams Per Day</FormLabel>
                   <FormControl>
-                    <Input type="number" min={1} max={4} {...field} />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={4}
+                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -433,7 +461,14 @@ export function CreateDateSheetForm() {
                 <FormItem>
                   <FormLabel>Maximum Exams Per Student Per Day</FormLabel>
                   <FormControl>
-                    <Input type="number" min={1} max={2} {...field} />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={2}
+                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -446,7 +481,14 @@ export function CreateDateSheetForm() {
                 <FormItem>
                   <FormLabel>Maximum Exams Per Faculty Per Day</FormLabel>
                   <FormControl>
-                    <Input type="number" min={1} max={2} {...field} />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={2}
+                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -459,7 +501,14 @@ export function CreateDateSheetForm() {
                 <FormItem>
                   <FormLabel>Minimum Gap Between Same Faculty Exams (hours)</FormLabel>
                   <FormControl>
-                    <Input type="number" min={1} max={72} {...field} />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={72}
+                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -472,7 +521,14 @@ export function CreateDateSheetForm() {
                 <FormItem>
                   <FormLabel>Minimum Gap Between Same Student Exams (hours)</FormLabel>
                   <FormControl>
-                    <Input type="number" min={1} max={72} {...field} />
+                    <Input
+                      type="number"
+                      min={1}
+                      max={72}
+                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
